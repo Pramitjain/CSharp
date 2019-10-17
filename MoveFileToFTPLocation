@@ -1,0 +1,110 @@
+  <!--OutPut FTP Details Starts -->
+    <add key="OutPuT_host" value="ftp3.dhl.com"/>
+    <add key="OutPuT_username" value="bluedart"/>
+    <add key="OutPuT_password" value="blu3dart"/>
+    <add key="OutPuT_Directory" value="/awbpid/output/work/"/>
+    
+    <add key ="OutPut_Url" value="ftp://ftp3.dhl.com/out/work/CSB2"/>
+ <!--OutPut FTP Details End -->
+ 
+ public void MoveFileToFTPLocation(Dictionary<string, string> _Path)
+        {
+            Stopwatch sw2 = new Stopwatch();
+            sw2.Start();
+            int MoveFilesTO__Count = 0;
+            try
+            {
+                int TotalFileCount = _Path.Count;
+
+                WriteLog.CreateTextFile(Environment.NewLine + "\t Step-3 Starts");
+                WriteLog.CreateTextFile(Environment.NewLine + "\t\t Move Files TO FTP => " + DateTime.Now.ToString("dd-MM-yyyy=>HH:mm:ss:tt"));
+
+                WriteLog.CreateTextFile(Environment.NewLine + "\t\t Total File Count=> " + TotalFileCount);
+
+                if (TotalFileCount > 0)
+                {
+                    var host = Convert.ToString(ConfigurationManager.AppSettings["OutPuT_host"]).Trim(); //"ftp3.dhl.com";
+                    var username = Convert.ToString(ConfigurationManager.AppSettings["OutPuT_username"]).Trim();
+                    var password = Convert.ToString(ConfigurationManager.AppSettings["OutPuT_password"]).Trim();
+                    string Directory = Convert.ToString(ConfigurationManager.AppSettings["OutPuT_Directory"]).Trim();
+                    string Directory1 = Convert.ToString(ConfigurationManager.AppSettings["Input_Directory_BackUpFile"]).Trim();
+
+                    foreach (var item in _Path)
+                    {
+                        if (!string.IsNullOrEmpty(item.Key))
+                        {
+                            if (item.Key.Trim().ToLower().Contains("copied_")) { Directory = Directory1 + DateTime.Now.ToString("dd-MM-yyyy"); }
+                            else { Directory = Convert.ToString(ConfigurationManager.AppSettings["OutPuT_Directory"]).Trim(); }
+                            FileInfo file2 = new FileInfo(item.Value);
+                            string filepath = file2.Directory + "\\" + file2.Name;
+                            string absoluteFileName = Convert.ToString(System.IO.Path.GetFileName(filepath));
+                            string Extension = System.IO.Path.GetExtension(filepath);
+
+                            if (Extension.Trim().ToLower() == ".txt" || Extension.Trim().ToLower() == ".xml")
+                            {
+                                string path = string.Empty;
+                                MoveFilesTO__Count++;
+
+                                if (Extension.ToLower() == ".txt" || Extension.ToLower() == ".xml")
+                                    path = Directory;
+
+                                using (var sftp = new SftpClient(host, username, password))
+                                {
+                                    try
+                                    {
+                                        sftp.Connect();
+
+                                        bool ifRemoteDirectoryExists = Utility.CheckIfRemoteDirectoryExists(sftp, Directory);
+
+                                        if (!ifRemoteDirectoryExists)
+                                        {
+                                            try
+                                            {
+                                                sftp.CreateDirectory(Directory);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                string msg = ex.Message;
+                                            }
+                                        }
+
+                                        sftp.ChangeDirectory(path);
+
+                                        using (FileStream fs = new FileStream(filepath, FileMode.Open))
+                                        {
+                                            sftp.BufferSize = 4 * 1024;
+                                            sftp.UploadFile(fs, Path.GetFileName(filepath));
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        string msg = ex.Message;
+                                        sftp.Dispose();
+                                        sftp.Disconnect();
+                                    }
+                                    finally
+                                    {
+                                        sftp.Dispose();
+                                        sftp.Disconnect();
+                                        //File.Delete(filepath);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLog.CreateTextFile(Environment.NewLine + "\t Step-3 MoveFileToFTPLocation() Exception Occours " + ex.Message);
+            }
+            finally
+            {
+                int hrs = sw2.Elapsed.Hours, mins = sw2.Elapsed.Minutes, secs = sw2.Elapsed.Seconds;
+
+                WriteLog.CreateTextFile(Environment.NewLine + "\t\t Moved Files To FTP Count => " + MoveFilesTO__Count);
+                WriteLog.CreateTextFile(Environment.NewLine + "\t\t Move Files To FTP Ends => " + DateTime.Now.ToString("dd-MM-yyyy=>HH:mm:ss:tt"));
+                WriteLog.CreateTextFile(Environment.NewLine + "\t\t Total Time Taken=> " + Convert.ToString(Convert.ToString(hrs) + " Hrs" + ":" + Convert.ToString(mins) + " Mins" + ":" + Convert.ToString(secs) + " Sec"));
+                WriteLog.CreateTextFile(Environment.NewLine + "\t Step-3 Ends");
+            }
+        }
