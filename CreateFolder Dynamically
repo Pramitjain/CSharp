@@ -1,0 +1,3 @@
+  static string CurrentDomain = Convert.ToString(AppDomain.CurrentDomain.BaseDirectory.Replace("bin\\Debug\\", ""));
+
+  string InputFileFolder = CurrentDomain + Convert.ToString(ConfigurationManager.AppSettings["InputFileFolder"]) + "//";
