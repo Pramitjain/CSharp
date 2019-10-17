@@ -1,0 +1,198 @@
+   XmlDocument XDocResp = null;
+   
+   XDocResp = Utility.ReadXmlFile(InputFileFolder + item);
+   
+   DataTable dt = Utility.CreateDataForCSB(XDocResp);
+   
+   
+        public static DataTable CreateDataForCSB(XmlDocument xmlDoc)
+        {
+            try
+            {
+                string TotalPiecesInMawb = string.Empty;
+                string MAWBNumber = string.Empty;
+
+                DataTable dtTemp = new DataTable();
+                dtTemp.Columns.Add("AirwayBillNumber", typeof(string));
+                dtTemp.Columns.Add("TotalPiecesInShipment", typeof(string));
+                dtTemp.Columns.Add("PID", typeof(string));
+                dtTemp.Columns.Add("Date", typeof(DateTime));
+
+                DataRow dtrow = dtTemp.NewRow();
+
+
+                if (xmlDoc.DocumentElement.Name == "Manifest")
+                {
+                    XmlNodeList productnode1 = xmlDoc.GetElementsByTagName("Manifest");
+
+                    XmlNodeList productnodelist1;//= productnode1.Item(0).FirstChild.ChildNodes;
+
+                    productnodelist1 = productnode1.Item(0).ChildNodes;
+
+                    foreach (XmlNode n in productnodelist1) //loop through each node 
+                    {
+                        if (n.Name.Equals("HandlingUnit"))
+                        {
+                            string AirwayBillNumber = string.Empty;
+                            string NumberOfPieces = string.Empty;
+                            string TotalPiecesInShipment = string.Empty;
+                            string PickUpDate = string.Empty;
+                            foreach (XmlNode innernest in n.ChildNodes)
+                            {
+                                if (innernest.Name.Equals("AirwayBillNumber"))
+                                {
+                                    AirwayBillNumber = innernest.InnerText;
+                                }
+
+                                else if (innernest.Name.Equals("NumberOfPieces"))
+                                {
+                                    NumberOfPieces = innernest.InnerText;
+                                }
+
+                                else if (innernest.Name.Equals("TotalPiecesInShipment"))
+                                {
+                                    string TotalPieces = innernest.InnerText;
+                                    int _count = Convert.ToInt16(TotalPieces.Length);
+
+                                    if (_count == 1) TotalPieces = "000" + TotalPieces;
+                                    if (_count == 2) TotalPieces = "00" + TotalPieces;
+                                    if (_count == 3) TotalPieces = "0" + TotalPieces;
+
+                                    TotalPiecesInShipment = TotalPieces;
+                                }
+                            }
+
+                            foreach (XmlNode innernest1 in n.ChildNodes)
+                            {
+                                if (innernest1.Name.Equals("ChildPId"))
+                                {
+                                    dtrow = dtTemp.NewRow();
+                                    dtrow["PId"] = innernest1.InnerText;
+
+                                    dtrow["AirwayBillNumber"] = AirwayBillNumber;
+                                    dtrow["TotalPiecesInShipment"] = TotalPiecesInShipment;
+                                    dtrow["Date"] = DateTime.Now.ToShortDateString();
+                                    dtTemp.Rows.Add(dtrow);
+                                }
+                            }
+                        }
+
+                    }
+                }
+                return dtTemp;
+            }
+            catch (Exception ex)
+            {
+                string msg = ex.Message;
+                return null;
+            }
+        }
+ 
+ public static XmlDocument ReadXmlFile(string xmlFile)
+        {
+            try
+            {
+                XmlDocument xmlDoc = new XmlDocument();
+                XmlDocument xDoc = new XmlDocument();
+
+                xmlDoc.Load(xmlFile);
+
+
+
+                string HandlingUnitNumber = String.Empty;
+                StringBuilder stbld = new StringBuilder();
+
+                using (StringWriter sw = new StringWriter(stbld))
+                {
+
+                    using (XmlTextWriter w = new XmlTextWriter(sw))
+                    {
+                        w.WriteStartElement("?xml version=" + "\"1.0\" encoding=\"UTF-8\"?");
+
+                        if (xmlDoc.DocumentElement.Name == "ns2:ManifestRequest")
+                        {
+                            XmlNodeList productnode1 = xmlDoc.GetElementsByTagName("ns2:ManifestRequest");
+                            XmlNodeList productnodelist1;//= productnode1.Item(0).FirstChild.ChildNodes;
+
+                            productnodelist1 = productnode1.Item(0).ChildNodes;
+                            w.WriteStartElement("Manifest");
+
+                            foreach (XmlNode n in productnodelist1) //loop through each node 
+                            {
+                                if (n.Name.Equals("Mawb"))
+                                {
+                                    foreach (XmlNode innernest in n.ChildNodes)
+                                    {
+                                        if (innernest.Name.Equals("HandlingUnit"))
+                                        {
+                                            foreach (XmlNode innermostnest in innernest.ChildNodes)
+                                            {
+                                                HandlingUnitNumber = String.Empty;
+
+                                                if (innermostnest.Name.Equals("HandlingUnitNumber"))
+                                                {
+                                                    HandlingUnitNumber = innermostnest.InnerText;
+
+                                                }
+                                                else if (innermostnest.Name.Equals("Hawb"))
+                                                {
+                                                    w.WriteStartElement("HandlingUnit");
+
+                                                    foreach (XmlNode innerinnermostnest in innermostnest.ChildNodes)
+                                                    {
+
+                                                        if (innerinnermostnest.Name.Equals("AirwayBillNumber"))
+                                                        {
+                                                            w.WriteElementString("HandlingUnitNumber", innerinnermostnest.ParentNode.ParentNode.FirstChild.InnerText);
+                                                            w.WriteElementString("AirwayBillNumber", innerinnermostnest.InnerText);
+                                                        }
+
+                                                        else if (innerinnermostnest.Name.Equals("TotalPiecesInShipment"))
+                                                        {
+                                                            stbld.Append("<TotalPiecesInShipment>" + innerinnermostnest.InnerText + "</TotalPiecesInShipment>");
+                                                        }
+
+                                                        if (innerinnermostnest.Name.Equals("PcsInShp"))
+                                                        {
+                                                            foreach (XmlNode innerinnermostnest1 in innerinnermostnest.ChildNodes)
+                                                            {
+                                                                if (innerinnermostnest1.Name.Equals("PId"))
+                                                                {
+                                                                    w.WriteElementString("ChildPId", "J" + innerinnermostnest1.InnerText);
+                                                                }
+                                                            }
+                                                        }
+
+                                                    }
+
+                                                    w.WriteEndElement();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            w.WriteEndElement();
+                            xDoc.LoadXml(stbld.ToString());
+                        }
+
+                        else
+                        {
+                            w.WriteStartElement("Error");
+                            w.WriteElementString("Errordata", "Incorrect xml file uploaded");
+                            w.WriteEndElement();
+                            xDoc.LoadXml(stbld.ToString());
+                        }
+                        return xDoc;
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                string msg = ex.Message;
+                return null;
+            }
+
+        }
