@@ -1,0 +1,106 @@
+    <add key="InputFileFolder" value="InputFileFolder"/>
+    <add key="InputFileCopiedFolder" value="InputFileCopiedFolder"/>
+    <add key="ErrorFiles" value="ErrorFiles"/>
+    <add key="LogCreation" value="LogCreation\"/>
+    <add key="WriteABWPIDFolder" value="WriteABWPIDFolder\"/>
+   
+   public void DownloadFilesFromFTP(ref bool IsNewFileDownloaded)
+        {
+            try
+            {
+                WriteLog.CreateTextFile(Environment.NewLine + "\t Step-1 Starts");
+                WriteLog.CreateTextFile(Environment.NewLine + "\t\t Downloading Files From FTP Location");
+
+                int FTPFileCount = 0;
+
+                if (!Directory.Exists(InputFileFolder))
+                    Directory.CreateDirectory(InputFileFolder);
+
+                Stopwatch sw1 = new Stopwatch();
+                sw1.Start();
+
+                var host = Convert.ToString(ConfigurationManager.AppSettings["Input_host"].Trim());
+                var username = Convert.ToString(ConfigurationManager.AppSettings["Input_username"].Trim());
+                var password = Convert.ToString(ConfigurationManager.AppSettings["Input_password"].Trim());
+                using (var sftp = new SftpClient(host, username, password))
+                {
+                    try
+                    {
+                        WriteLog.CreateTextFile(Environment.NewLine + "\t\t FTP Connection Starts => " + DateTime.Now.ToString("dd-MM-yyyy=>HH:mm:ss:tt"));
+
+                        sftp.Connect();
+
+                        WriteLog.CreateTextFile(Environment.NewLine + "\t\t FTP Connection Opens");
+
+                        var ftpFiles = sftp.ListDirectory(Convert.ToString(ConfigurationManager.AppSettings["Input_Directory"].Trim()));
+                        StringBuilder filePath = new StringBuilder();
+
+                        WriteLog.CreateTextFile(Environment.NewLine + "\t\t Downloading Files To Local Folder Starts => " + InputFileFolder);
+                        foreach (var fileName in ftpFiles)
+                        {
+                            filePath.Append(InputFileFolder).Append(Convert.ToString(fileName.Name.Trim()));
+                            string extension = System.IO.Path.GetExtension(Convert.ToString(filePath).Trim());
+
+                            if (extension.Trim().ToLower() == ".xml" || extension.Trim().ToLower() == ".zip")
+                            {
+                                FTPFileCount++;
+                                using (var file = File.OpenWrite(Convert.ToString(filePath).Trim()))
+                                {
+                                    try
+                                    {
+                                        // Download Files from the FTP location.
+                                        sftp.DownloadFile(fileName.FullName, file, null);
+                                        IsNewFileDownloaded = true;
+                                        // Delete Files from the FTP location after Successfully Downloading the files from the FTP Location.
+                                        sftp.Delete(fileName.FullName);
+
+
+                                    }
+                                    catch (Exception)
+                                    {
+                                        WriteLog.CreateTextFile(Environment.NewLine + "\t\t Error Occoured While Downloading file => " + fileName.FullName + "File Size => " + Convert.ToInt64(file.Length));
+                                    }
+
+                                    string zippedFileName = file.Name;
+                                    file.Dispose();
+                                    //ZipFile.CreateFromDirectory(Convert.ToString(filePath).Trim(), UnzippedFile, CompressionLevel.Optimal, true);
+
+                                    if (extension.Trim().ToLower() == ".zip")
+                                    {
+                                        ZipFile.ExtractToDirectory(zippedFileName, InputFileFolder);
+                                        File.Delete(zippedFileName);
+                                    }
+
+                                }
+                            }
+                            filePath.Clear();
+                        }
+
+                        WriteLog.CreateTextFile(Environment.NewLine + "\t\t FTP Files Count => " + FTPFileCount);
+
+                        WriteLog.CreateTextFile(Environment.NewLine + "\t\t Downloading Files To Local Folder Ends=> " + DateTime.Now.ToString("dd-MM-yyyy=>HH:mm:ss:tt"));
+
+                        sftp.Disconnect();
+                    }
+                    catch (Exception ex)
+                    {
+                        sftp.Dispose();
+                        sftp.Disconnect();
+                        WriteLog.CreateTextFile(Environment.NewLine + "\t Step-1 Exception Occours " + ex.Message);
+                    }
+                    finally
+                    {
+                        int hrs = sw1.Elapsed.Hours, mins = sw1.Elapsed.Minutes, secs = sw1.Elapsed.Seconds;
+                        sftp.Dispose();
+                        sftp.Disconnect();
+                        WriteLog.CreateTextFile(Environment.NewLine + "\t\t FTP Connection Closed");
+                        WriteLog.CreateTextFile(Environment.NewLine + "\t\t Total Time Taken => " + Convert.ToString(Convert.ToString(hrs) + " Hrs" + ":" + Convert.ToString(mins) + " Mins" + ":" + Convert.ToString(secs) + " Sec"));
+                        WriteLog.CreateTextFile(Environment.NewLine + "\t Step-1 Ends");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteLog.CreateTextFile(Environment.NewLine + "\t Step-1 Exception Occours " + ex.Message);
+            }
+        }
