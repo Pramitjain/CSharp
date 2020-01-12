@@ -1,0 +1,75 @@
+ public static class DataTableExtension
+    {
+        public static IList<dynamic> ToDynamic(this DataTable dt)
+        {
+            IList<dynamic> dynamicDt = new List<dynamic>();
+
+            IDictionary<string, object> dn = null;
+
+            foreach (DataRow item in dt.Rows)
+            {
+                dn = new Dictionary<string, object>();
+
+                foreach (DataColumn column in dt.Columns)
+                {
+                    if (item[column].GetType().Equals(typeof(DateTime)))
+                    {
+                        dn[column.ColumnName] = item[column].ToString();
+                    }
+                    else if (item[column].GetType() == typeof(System.DBNull))
+                    {
+                        dn[column.ColumnName] = null;
+                    }
+                    else
+                    {
+                        dn[column.ColumnName] = item[column];
+                    }
+                }
+                //dn["length"] = dn.Count;
+                dynamicDt.Add(dn);
+            }
+            return dynamicDt;
+        }
+
+        public static IDictionary<string, object> ToDynamic(this DataSet ds)
+        {
+            IDictionary<string, object> dynamicDt = new Dictionary<string, object>();
+
+            foreach (DataTable item in ds.Tables)
+            {
+                if (item != null && item.Rows.Count > 0)
+                {
+                    dynamicDt.Add(item.TableName, item.ToDynamic());
+                }
+            }
+            return dynamicDt;
+        }
+
+        public static IList<dynamic> ToDynamic(this string str)
+        {
+            IList<dynamic> dynamicstr = new List<dynamic>();
+            dynamicstr.Add(str);
+            return dynamicstr;
+        }
+    }
+    
+    
+    
+    [HttpGet, Route("LoadVoucherType")]
+        public IList<dynamic> LoadVoucherType()
+        {
+            try
+            {
+                using (DataTable dt = _data.GetAllVoucherType())
+                {
+                    if (dt != null && dt.Rows.Count > 0)
+                        return dt.ToDynamic();
+                    else return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                ExceptionUtility.LogExceptionAsync(ex);
+                return null;
+            }
+        }
