@@ -212,3 +212,17 @@
                 return null;
             }
         }
+
+
+
+  DataColumn auto = new DataColumn("AutoId", typeof(System.Int32));
+                    dttableNew.Columns.Add(auto);
+                    auto.AutoIncrement = true;
+
+                    //'Set the Starting or Seed value.
+                    auto.AutoIncrementSeed = 1;
+
+                    //'Set the Increment value.
+                    auto.AutoIncrementStep = 1;
+                    // Change Auto Increment Column Ordinal Position to 0 (ie First Column)
+                   dttableNew.Columns["AutoId"].SetOrdinal(0);
