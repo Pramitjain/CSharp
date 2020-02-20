@@ -1,0 +1,28 @@
+public class UserData
+    {
+        private UserData() { }
+
+        private static UserData instance = null;
+
+        public static UserData Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = new UserData();
+                }
+                return instance;
+            }
+        }
+
+        public void addMethod(int a, int b)
+        {
+            Console.WriteLine(a + b);
+        }
+        public void SubMethod(int a, int b)
+        {
+            Console.WriteLine(a - b);
+        }
+
+    }
