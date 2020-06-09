@@ -1,0 +1,70 @@
+  public class CacheHelper
+    {
+        public static double cacheExpirationHours = Convert.ToDouble(ConfigurationManager.AppSettings["cacheExpirationHours"]);
+
+        public static void Insert<T>(string cacheKey, T objToCache, double hoursBeforeExpiration = 0)
+        {
+            if (objToCache != null && typeof(T).IsValueType && Nullable.GetUnderlyingType(typeof(T)) == null)
+                throw new Exception(string.Format("Dont add non-nullable stuff to the cache. Type: {0} KeyName: {1}", typeof(T), cacheKey));
+            hoursBeforeExpiration = hoursBeforeExpiration == 0 ? cacheExpirationHours : hoursBeforeExpiration;
+            var expire = DateTime.Now.AddHours(hoursBeforeExpiration);
+            HttpContext.Current.Cache.Insert(cacheKey, objToCache, null, expire, Cache.NoSlidingExpiration);
+        }
+
+        public static T Get<T>(string cacheItemName)
+        {
+            try { return (T)HttpContext.Current.Cache[cacheItemName]; }
+            catch { return default(T); }
+        }
+
+        //public static T RetrieveThroughCache<T>(string keyName, Func<T> retrievalCall, double hoursBeforeExpiration = 1)
+        //{
+        //    var objFromCache = CacheHelper.Get<T>(keyName);
+        //    if (objFromCache != null)
+        //        return objFromCache;
+
+        //    var objFromDataCall = retrievalCall();
+        //    Insert(keyName, objFromDataCall, hoursBeforeExpiration);
+        //    return objFromDataCall;
+        //}
+
+        public static void Remove(string keyName)
+        {
+            HttpContext.Current.Cache.Remove(keyName);
+        }
+    }
+
+
+ public class UserDetails
+    {
+        public int USerId { get; set; }
+        public string UserName { get; set; }
+        public string Role { get; set; }
+
+        public DateTime LoginDateTime { get; set; }
+    }
+    
+    UserDetails UserDetails = new UserDetails();
+                        UserDetails.USerId = Convert.ToInt32(dt.Rows[0][1]);
+                        UserDetails.UserName = Convert.ToString(dt.Rows[0][0]);
+                        UserDetails.Role = Convert.ToString(dt.Rows[0][2]);
+                        UserDetails.LoginDateTime = Convert.ToDateTime(DateTime.Now);
+
+
+// INsert in Cache with Type T
+string keyName = Convert.ToString("abc") + "_CurrentUser";
+
+                        if (!string.IsNullOrEmpty(UserDetails.UserName))
+                        {
+                            CacheHelper.Insert(keyName, UserDetails, 3);
+                        }
+
+// Get Details With Type T
+
+string keyName = Convert.ToString("abc") + "_CurrentUser";
+
+            var objUser = CacheHelper.Get<UserDetails>(keyName);
+            if (objUser != null)
+            {
+                
+            }
