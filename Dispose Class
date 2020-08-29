@@ -1,0 +1,14 @@
+ public class Entity : IDisposable
+    {
+
+        public string CreatedBy { get; set; }
+        public string CreatedUserId { get; set; }
+        public string CreatedIp { get; set; }
+
+        public void Dispose()
+        {
+            this.CreatedBy = string.Empty;
+            this.CreatedUserId = string.Empty;
+            this.CreatedIp = string.Empty;
+        }
+    }
