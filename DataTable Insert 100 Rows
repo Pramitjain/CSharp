@@ -1,0 +1,80 @@
+DataTable dt2 = dt.Copy();
+                DataColumn dc = dt2.Columns.Add("id", typeof(int));
+                dc.AutoIncrement = true;
+                dc.AutoIncrementSeed = 1;
+                dc.AutoIncrementStep = 1;
+
+                int _count = 0;
+                foreach (DataRow dr in dt2.Rows)
+                {
+                    dr["id"] = _count + 1;
+                    _count = _count + 1;
+                }
+                dt2.AcceptChanges();
+
+
+                int _RowsToInsert_Batch = Convert.ToInt16(ConfigurationManager.AppSettings["_RowsToInsert_Batch"].ToString());
+
+                int _loop = Convert.ToInt16(dt.Rows.Count / _RowsToInsert_Batch);
+                _loop = _loop + 1;
+                int _From = 0; int _To = 0;
+                _From = 1;
+                _To = _RowsToInsert_Batch;
+                for (int i = 0; i < _loop; i++)
+                {
+
+                    DataColumn dc1 = new DataColumn("id");
+                    DataTable dtsd1 = (from sd in dt2.AsEnumerable()
+                                       where (sd.Field<int>("id") >= Convert.ToInt16(_From) && (sd.Field<int>("id") <= Convert.ToInt16(_To)))
+                                       select sd).CopyToDataTable();
+                    dtsd1.Columns.Remove("id");
+                    dtsd1.AcceptChanges();
+
+                    SqlConnection conn = new SqlConnection(ManifestPrinting_Conn);
+                    try
+                    {
+                        SqlParameter[] param = new SqlParameter[2];
+                        conn.Open();
+                        SqlCommand com = new SqlCommand("usp_ShippingBill__DataMove_CSB5History_InsertUpdate1", conn);
+                        com.CommandType = CommandType.StoredProcedure;
+                        com.CommandTimeout = Convert.ToInt32(ConfigurationManager.AppSettings["CommandTimeOut"]);
+                        var da = new SqlDataAdapter(com);
+
+
+                        var parameter = com.CreateParameter();
+
+                        parameter.ParameterName = "@tblC";
+                        parameter.TypeName = "usp_ShippingBill_DataMove_CSB5History_InsertUpdate_type";
+                        parameter.SqlDbType = SqlDbType.Structured;
+                        parameter.Direction = ParameterDirection.Input;
+                        parameter.Value = dtsd1;
+
+                        com.Parameters.Add(parameter);
+
+                        var parameter1 = com.CreateParameter();
+
+                        parameter1.ParameterName = "@Message";
+                        parameter1.Direction = ParameterDirection.Output;
+                        parameter1.Value = "";
+                        parameter1.Size = int.MaxValue;
+
+                        com.Parameters.Add(parameter1);
+                        //com.Parameters.Add(param);
+                        da.Fill(_returnData);
+                        //com.ExecuteNonQuery();
+                        Message = Convert.ToString(parameter1.Value);
+                        conn.Close();
+
+                        Update_CSB5History_ExtractTool_Status(_returnData, "csb5history");
+
+                    }
+                    catch (Exception ex)
+                    {
+                        conn.Close();
+                        CSB5History_WriteLog.CreateTextFile(Environment.NewLine + "\t\t  Step-6 UserData.cs InsertPdfDetails() Exception Occours " + ex.Message);
+                    }
+
+                    _From = _To + 1;
+                    _To = _To + 100;
+
+                }
