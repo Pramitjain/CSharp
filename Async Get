@@ -1,0 +1,61 @@
+
+static void Main(string[] args)
+        {
+            //ReadDirectory(ref IsNewFileDownloaded);
+            //var test = GetDirectories(@"\\199.40.47.17\data\BackDatedFiles_Output");
+            var accountTask = Task.Run(async () => Console.WriteLine(await GetAccounts()));
+            var depositsTask = Task.Run(async () => Console.WriteLine(await GetDeposits()));
+
+            Task.WhenAll(accountTask, depositsTask).Wait();
+        }
+
+
+
+   public static async Task<int> GetAccounts()
+        {
+            string connString = @"Database=ManifestPrinting;Server=MYKULWV1198\SQL02;uid=applogin;password=pass@w0rd;";
+            int total1 = 0;
+            using (SqlConnection connection = new SqlConnection(connString))
+            {
+                string query1 = "SELECT COUNT(*) FROM [CSB5History]";
+                SqlCommand command = new SqlCommand(query1, connection);
+                connection.Open();
+                WriteLog.CreateTextFile(Environment.NewLine + " I am from Get Account ");
+                for (int i = 0; i < 19000000; i++)
+                {
+                    string s = i.ToString();
+                }
+                total1 = (int)await command.ExecuteScalarAsync();
+                Console.WriteLine(total1.ToString());
+                WriteLog.CreateTextFile(Environment.NewLine + "Get Account " + total1);
+            }
+            return total1;
+        }
+
+        public static async Task<int> GetDeposits()
+        {
+            int total2 = 0;
+            string connString = @"Database=ManifestPrinting;Server=MYKULWV1198\SQL02;uid=applogin;password=pass@w0rd;";
+            using (SqlConnection connection = new SqlConnection(connString))
+            {
+                string query2 = "SELECT COUNT(*) FROM [dbo].[3CShipment_contingency]";
+                SqlCommand command = new SqlCommand(query2, connection);
+                connection.Open();
+
+                //for (int i = 0; i < 19000000; i++)
+                //{
+
+                //    WriteLog.CreateTextFile(Environment.NewLine + " I am from Deposit Account ");
+                //    string s = i.ToString();
+                //}
+
+
+                WriteLog.CreateTextFile(Environment.NewLine + " I am from Executing");
+                total2 = (int)await command.ExecuteScalarAsync();
+                WriteLog.CreateTextFile(Environment.NewLine + "Deposit Account " + total2);
+                Console.WriteLine(total2.ToString());
+            }
+            return total2;
+        }
+
+     
