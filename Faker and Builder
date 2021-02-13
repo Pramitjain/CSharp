@@ -1,0 +1,58 @@
+
+
+Install-Package Faker.Net -Version 1.0.3
+Install-Package NBuilder
+
+ public class Customer 
+    {
+        public string EmailAddress { get; set; }
+        public string FirstName { get; set; }
+        public Guid Id { get; set; }
+        public string LastName { get; set; }
+        public string TelephoneNumber { get; set; }
+
+        public Address BillingAddress { get; set; }
+        public DateTime? Created { get; set; }
+    }
+
+    public class Address 
+    {
+        public Guid? Id { get; set; }
+        public string Address1 { get; set; }
+        public string Address2 { get; set; }
+        public string City { get; set; }
+        public string State { get; set; }
+        public string ZipCode { get; set; }
+        public string Country { get; set; }
+
+        
+
+        //public AddressType? AddressType { get; set; }
+
+    }
+    
+    
+    //Binding Data with Builder class and Faker  
+ 
+   var daysGenerator = new RandomGenerator();
+
+            List<Address> _address = Builder<Address>.CreateListOfSize(100).All()
+                   .With(c => c.Address1 = Faker.Address.StreetName())
+                   .With(c => c.Address2 = Faker.Address.StreetAddress())
+                   .With(c => c.City = Faker.Address.City())
+                   .With(c => c.State = Faker.Address.UsState())
+                   .With(c => c.Country = Faker.Address.Country())
+
+                   .With(c => c.ZipCode = Faker.Address.ZipCode()).Build().ToList();
+
+            //var customers = Builder<Customer>.CreateListOfSize(100).Build();
+            var customers = Builder<Customer>.CreateListOfSize(100).All()
+                .With(c => c.Id = new Guid())
+            .With(c => c.FirstName = Faker.Name.First())
+            .With(c => c.LastName = Faker.Name.Last())
+            .With(c => c.EmailAddress = Faker.Internet.Email())
+            .With(c => c.TelephoneNumber = Faker.Phone.Number())
+            .With(c => c.BillingAddress = Pick<Address>.RandomItemFrom(_address))
+            .With(c => c.Created = DateTime.Now.AddDays(-daysGenerator.Next(1, 100)))
+        .Build();
+        
