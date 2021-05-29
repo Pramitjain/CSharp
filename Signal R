@@ -1,0 +1,69 @@
+[assembly: OwinStartup(typeof(NakodaAgencies.Startup))]
+
+namespace NakodaAgencies
+{
+    public class Startup
+    {
+        public void Configuration(IAppBuilder app)
+        {
+            app.MapSignalR();
+        }
+    }
+}
+
+==============================================================================================================
+
+Install-Package Microsoft.AspNet.SignalR
+
+==============================================================================================================
+
+
+namespace NakodaAgencies.Common
+{
+    public class CustomerHub :Hub
+    {
+        [HubMethodName("broadcastData")]
+        public static void BroadcastData()
+        {
+            IHubContext context = GlobalHost.ConnectionManager.GetHubContext<CustomerHub>();
+            context.Clients.All.updatedData();
+        }
+    }
+}
+
+
+
+====================================== On File Where Data is Updated =============================
+ CustomerHub.BroadcastData();
+ =================================================================================================
+ 
+ on Script .
+ 
+ =================================================================================================
+ <script src="../Scripts/jquery.signalR-2.4.2.js"></script>
+    <script src="../signalr/hubs"></script>
+
+    <script type="text/javascript">
+        var srNo = 1;
+        $(function () {
+            // Reference the hub.
+            var hubNotif = $.connection.customerHub;
+
+            // Start the connection.
+            $.connection.hub.start().done(function () {
+                var srNo = 1;
+                GetPendingOrder_Details(1, '');
+            });
+
+            // Notify while anyChanges.
+            hubNotif.client.updatedData = function () {
+                var srNo = 1;
+                GetPendingOrder_Details(1, '');
+            };
+        });
+
+    </script>
+    
+    ===================================================================================
+ 
+ 
