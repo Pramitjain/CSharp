@@ -59,3 +59,65 @@
         }
         
         
+        
+        =============================================== Validate JWT =====================================
+        
+        Add Code in Start Up.cs class in Configure Service
+        
+           // Token Data Controller Token Validation Method Starts here
+            #region Code for JWT Token to validate the token header Step -1 
+
+            // Code to validate the JWT Token Step -1 Starts here.
+            var secretKey = Configuration.GetSection("AppSettings:Key").Value;
+            var key = new SymmetricSecurityKey(Encoding.UTF8
+                .GetBytes(secretKey));
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            // services.AddAuthentication("Bearer")
+                .AddJwtBearer(opt =>
+                {
+                    opt.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        IssuerSigningKey = key
+                    };
+                });
+            #endregion
+
+    ===================
+        
+    Add Configure(IApplicationBuilder app,
+    
+    app.UseAuthentication();
+    
+    Jquery Ajax Method 
+    
+    $("#btn_GetUsers").click(function () {
+                try {
+
+
+                    var Token = $("#txt_Token").val();
+                    var TokenParam = "Bearer " + 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IlByYW1pdCIsIm5hbWVpZCI6IjEiLCJuYmYiOjE2MjIzNzc1NDEsImV4cCI6MTYyMjM3NzYwMSwiaWF0IjoxNjIyMzc3NTQxfQ.ySs7pq7qKt9WWh4PjzdKakoRwKBIKayv6DhJkeBPTGE';
+                    console.log(TokenParam);
+                    var settings = {
+                        "url": "http://localhost:58545/API/TokenData/Users",
+                        "method": "GET",
+                        "timeout": 0,
+                        "headers": {
+                            "Authorization": TokenParam
+
+                        },
+                    };
+
+                    $.ajax(settings).done(function (response) {
+                        console.log(response);
+                    });
+                } catch (e) {
+                    console.log(e   );
+                }
+            })
+        })
+        
+        
