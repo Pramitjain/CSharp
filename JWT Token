@@ -1,0 +1,61 @@
+========================= Create a JWT Token =======================================
+
+ [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginReqDto loginReq)
+        {
+            var user = await uow.UserRepository.Authenticate(loginReq.UserName, loginReq.Password);
+
+            ApiError apiError = new ApiError();
+
+            if (user == null)
+            {
+                apiError.ErrorCode = Unauthorized().StatusCode;
+                apiError.ErrorMessage = "Invalid user name or password";
+                apiError.ErrorDetails = "This error appear when provided user id or password does not exists";
+                return Unauthorized(apiError);
+            }
+
+            var loginRes = new LoginResDto();
+            loginRes.UserName = user.Username;
+            loginRes.Token = CreateJWT(user);
+            return Ok(loginRes);
+        }
+        
+        ============  "Key": "shhh... this is my top secret" ============================================
+        
+        ============== Create Token ===================
+        
+           private string CreateJWT(User user)
+        {
+            var secretKey = configuration.GetSection("AppSettings:Key").Value;
+            var key = new SymmetricSecurityKey(Encoding.UTF8
+                .GetBytes(secretKey));
+
+            var claims = new Claim[] {
+                new Claim(ClaimTypes.Name,user.Username),
+                new Claim(ClaimTypes.NameIdentifier,user.Id.ToString())
+            };
+
+            var signingCredentials = new SigningCredentials(
+                    key, SecurityAlgorithms.HmacSha256Signature);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(claims),
+                Expires = DateTime.UtcNow.AddMinutes(1),
+                SigningCredentials = signingCredentials
+            };
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            try
+            {
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                return tokenHandler.WriteToken(token);
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+        
+        
