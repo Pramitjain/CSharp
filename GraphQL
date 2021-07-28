@@ -8,6 +8,6 @@ Install Package
 7. EntityFramework core
 8. entityframework sqlserver
 9. entityframework tools
-
+10. Install-Package MiniProfiler.AspNetCore.Mvc
 =================================================================================
 
