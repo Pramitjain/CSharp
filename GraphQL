@@ -3,9 +3,11 @@ Install Package
 2. HotChocolate.AspNetcore.Authorization
 3. HotChocolate.AspNetcore.Playground
 4. HotChocolate.Data.EntityFramework
-5. EntityFramework core
-6. entityframework sqlserver
-7. entityframework tools
+5. HotChocolate.Types
+6. HotChocolate.Types.Spatial
+7. EntityFramework core
+8. entityframework sqlserver
+9. entityframework tools
 
 =================================================================================
 
